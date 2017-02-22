@@ -42,13 +42,13 @@ import org.opencv.videoio.Videoio;
 
 public class Video extends JPanel {
 
-	/**
-	 * 
-	 */
+	private static final int FRAME_HEIGHT = 768;
+	private static final int FRAME_WIDTH = 1024;
+	
 	private static final long serialVersionUID = 1L;
 	private JFrame frame = new JFrame("Hand track");
 	private JLabel lab = new JLabel();
-	private static String string = "Attendo azione";
+	private static String string = "Detection zone";
 
 	private static Point last = new Point();
 	private static boolean close = false;
@@ -60,12 +60,14 @@ public class Video extends JPanel {
 	/**
 	 * Create the panel.
 	 */
-	public Video() {
+	public Video() {}
 
-	}
-
+	/**
+	 * Create a standard frame
+	 * @param webcam
+	 */
 	public void setFrame(final VideoCapture webcam) {
-		frame.setSize(1024, 768);
+		frame.setSize(FRAME_WIDTH, FRAME_HEIGHT);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
 		frame.getContentPane().add(lab);
@@ -93,12 +95,24 @@ public class Video extends JPanel {
 		}
 	}
 
-	public double calculatesDistance(Point P1, Point P2) {
+	/**
+	 * Calculate distance
+	 * @param P1
+	 * @param P2
+	 * @return
+	 */
+	public double calculateDistance(Point P1, Point P2) {
 		double distance = Math.sqrt(((P1.x - P2.x) * (P1.x - P2.x)) + ((P1.y - P2.y) * (P1.y - P2.y)));
-
 		return distance;
 	}
-
+	
+	/**
+	 * Calculate angle
+	 * @param P1
+	 * @param P2
+	 * @param P3
+	 * @return
+	 */
 	public double calculateAngle(Point P1, Point P2, Point P3) {
 		double angle = 0;
 		Point v1 = new Point();
@@ -112,20 +126,41 @@ public class Video extends JPanel {
 		double length2 = Math.sqrt((v2.x * v2.x) + (v2.y * v2.y));
 		angle = Math.acos(dotproduct / (length1 * length2));
 		angle = angle * 180 / Math.PI;
-
 		return angle;
 	}
 
+	/**
+	 * Filter using RGB color
+	 * @param b
+	 * @param g
+	 * @param r
+	 * @param b1
+	 * @param g1
+	 * @param r1
+	 * @param image
+	 * @return
+	 */
 	public Mat filterColorRGB(int b, int g, int r, int b1, int g1, int r1, Mat image) {
 		Mat modification = new Mat();
 		if (image != null) {
 			Core.inRange(image, new Scalar(b, g, r), new Scalar(b1, g1, r1), modification);
 		} else {
-			System.out.println("Errore image");
+			System.out.println("Error image");
 		}
 		return modification;
 	}
 
+	/**
+	 * Filter using HSV color
+	 * @param h
+	 * @param s
+	 * @param v
+	 * @param h1
+	 * @param s1
+	 * @param v1
+	 * @param image
+	 * @return
+	 */
 	public Mat filterColorHSV(int h, int s, int v, int h1, int s1, int v1, Mat image) {
 		Mat modification = new Mat();
 		if (image != null) {
@@ -136,7 +171,13 @@ public class Video extends JPanel {
 		return modification;
 	}
 
-	public Mat skinDetection(Mat orig) {
+	/**
+	 * Detect HSV values for the skin
+	 * @param orig
+	 * @return
+	 */
+	public static Mat skinDetection(Mat orig) {
+		//Detect skin color (HSV) for the hand
 		Mat mask = new Mat();
 		Mat result = new Mat();
 		Core.inRange(orig, new Scalar(0, 0, 0), new Scalar(30, 30, 30), result);
@@ -154,9 +195,7 @@ public class Video extends JPanel {
 			}
 
 		}
-
 		return result;
-
 	}
 
 	public Mat morphologicalFiltering(int kd, int ke, Mat image) {
@@ -202,7 +241,7 @@ public class Video extends JPanel {
 				new Point(0, 0));
 
 		for (int i = 0; i < contours.size(); i++) {
-			System.out.println("Dimensione contorni"+contours.get(i).size().height);
+			//System.out.println("Dimension contour "+ contours.get(i).size().height);
 			if (contours.get(i).size().height > filtropixel) {
 				contoursbig.add(contours.get(i));
 			}
@@ -294,6 +333,12 @@ public class Video extends JPanel {
 		return defects;
 	}
 
+	/**
+	 * Detect the palm center
+	 * @param image
+	 * @param defects
+	 * @return palm center
+	 */
 	public Point palmCenter(Mat image, List<Point> defects) {
 		MatOfPoint2f pr = new MatOfPoint2f();
 		Point center = new Point();
@@ -314,6 +359,13 @@ public class Video extends JPanel {
 
 	}
 
+	/**
+	 * Detect the fingers
+	 * @param image
+	 * @param contourPoints
+	 * @param center
+	 * @return list of fingers
+	 */
 	public List<Point> fingers(Mat image, List<Point> contourPoints, Point center) {
 		List<Point> contours = new LinkedList<Point>();
 		List<Point> fingers = new LinkedList<Point>();
@@ -421,6 +473,13 @@ public class Video extends JPanel {
 		return fingers;
 	}
 
+	/**
+	 * Detect the palm center
+	 * @param image
+	 * @param center
+	 * @param finger
+	 * @param fingers
+	 */
 	public void getPalmCenter(Mat image, Point center, Point finger, List<Point> fingers) {
 
 		Imgproc.line(image, new Point(150, 50), new Point(730, 50), new Scalar(255, 0, 0), 2);
@@ -445,10 +504,21 @@ public class Video extends JPanel {
 
 	}
 
-	public void mouseTrack(List<Point> fingers, Point dito, Point center, Robot r, boolean on, Mat image, long temp)
+	/**
+	 * Track the mouse using fingers
+	 * @param fingers
+	 * @param finger
+	 * @param center
+	 * @param r
+	 * @param on
+	 * @param image
+	 * @param temp
+	 * @throws InterruptedException
+	 */
+	public void mouseTrack(List<Point> fingers, Point finger, Point center, Robot r, boolean on, Mat image, long temp)
 			throws InterruptedException {
 
-		if (on && center.x > 10 && center.y > 10 && dito.x > 10 && center.y > 10 && start) {
+		if (on && center.x > 10 && center.y > 10 && finger.x > 10 && center.y > 10 && start) {
 			current = temp;
 			switch (fingers.size()) {
 			case 0:
@@ -482,21 +552,21 @@ public class Video extends JPanel {
 					r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 
 					r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-					System.out.println("rilascio");
+					System.out.println("release");
 
 					act = false;
 				} else {
 					if (current - prev > 500) {
-						string = "Puntatore";
+						string = "Pointer";
 
 						Point p1 = new Point();
-						p1.x = (int) (-1 * (dito.x - 730)) * 1366 / 580;
-						p1.y = (int) (dito.y - 50) * 768 / 330;
+						p1.x = (int) (-1 * (finger.x - 730)) * 1366 / 580;
+						p1.y = (int) (finger.y - 50) * 768 / 330;
 						if (p1.x > 0 && p1.x > 0 && p1.x < 1367 && p1.y < 769) {
 							r.mouseMove((int) p1.x, (int) p1.y);
 						}
-						last.x = center.x - dito.x;
-						last.y = center.y - dito.y;
+						last.x = center.x - finger.x;
+						last.y = center.y - finger.y;
 					}
 				}
 				break;
@@ -507,15 +577,15 @@ public class Video extends JPanel {
 				if (act && current - prev > 500) {
 					act = false;
 					if ((int) angle < 30) {
-						string = "Doppio click";
-						System.out.println("doppio click");
+						string = "Dubbel click";
+						System.out.println("Dubbel click");
 						r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
 						r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 						r.delay(100);
 						r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
 						r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 					} else {
-						string = "Tasto destro";
+						string = "Right key";
 						r.mousePress(InputEvent.BUTTON3_DOWN_MASK);
 						r.mouseRelease(InputEvent.BUTTON3_DOWN_MASK);
 					}
@@ -523,11 +593,11 @@ public class Video extends JPanel {
 				}
 				break;
 			case 3:
-				string = "Annulla";
+				string = "Cancel";
 				act = false;
 				break;
 			case 4:
-				string = "Blocco puntatore: attendo azione!";
+				string = "Pointer block await action!";
 				r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 
 				prev = temp;
@@ -536,7 +606,7 @@ public class Video extends JPanel {
 				break;
 
 			case 5:
-				string = "Blocco puntatore: attendo azione!";
+				string = "Pointer block await action!";
 				if (!act) {
 					r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 
@@ -545,7 +615,7 @@ public class Video extends JPanel {
 				}
 				break;
 			default:
-				string = "Attendo azione!";
+				string = "Attention zone!";
 
 				break;
 			}
@@ -557,6 +627,7 @@ public class Video extends JPanel {
 
 	}
 
+	
 	public Point movingAverageFilter(List<Point> buffer, Point attuale) {
 		Point media = new Point();
 		media.x = 0;
@@ -576,15 +647,22 @@ public class Video extends JPanel {
 
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 		Video v = new Video();
+		
+		//open webcam 
 		VideoCapture webcam = new VideoCapture(0);
 		System.out.println(webcam.open(0));
 
-		webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, 768);
-		webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, 1024);
+		//frames are 768 pixels wide and 1024 pixels high
+		webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT); 
+		webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
+		
 		v.setFrame(webcam);
 		
+		//read the next videoframe
 		Mat frame = new Mat();
         webcam.read(frame); 
+        
+        Mat skin = skinDetection(frame); 		
 		
 		Robot r = new Robot();
 		Mat mimm = new Mat();
@@ -607,10 +685,14 @@ public class Video extends JPanel {
 					temp = System.currentTimeMillis();
 					webcam.read(frame); 
 					webcam.retrieve(mimm);
-									
-					//modification = v.filtromorfologico(2, 7, v.filtrocolorergb(0,0, 0, 40, 40, 40, mimm));
+								
+					//B,G,R
+					//modification = v.morphologicalFiltering(2, 7, v.filterColorRGB(90, 100, 150, 110, 130, 180, mimm));
 					
-					modification = v.morphologicalFiltering(2, 7, v.filterColorHSV(0, 0, 0, 180, 255, 40, mimm));
+					//0-20 = 0 - 50
+					//30-50 = 70 - 120
+					//50-70 = 120 - 160
+					modification = v.morphologicalFiltering(2, 7, v.filterColorHSV(0, 0, 0, 180, 255, 40,mimm));
 
 					defects = v.envelopeDefects(mimm, v.lookingOutline(mimm, modification, false, false, 450), false, 5);
 
@@ -618,7 +700,7 @@ public class Video extends JPanel {
 						buffer.add(v.palmCenter(mimm, defects));
 					} else {
 						center = v.movingAverageFilter(buffer, v.palmCenter(mimm, defects));
-						System.out.println((int)center.x+" "+(int)center.y+" "+(int)v.palmCenter(mimm,defects).x+" "+(int)v.palmCenter(mimm,defects).y);
+						//System.out.println((int)center.x+" "+(int)center.y+" "+(int)v.palmCenter(mimm,defects).x+" "+(int)v.palmCenter(mimm,defects).y);
 					}
 
 					fingers = v.fingers(mimm, v.contourList(modification, 200), center);
@@ -629,8 +711,7 @@ public class Video extends JPanel {
 					} else {
 						if (fingers.size() == 1) {
 							finger = v.movingAverageFilter(buffer_fingers, fingers.get(0));
-							// System.out.println((int)dito.x +" "+(int)dito.y+"
-							// "+(int)dita.get(0).x+" "+(int)dita.get(0).y);
+							//System.out.println((int)finger.x +" "+(int)finger.y+" "+(int)fingers.get(0).x+" "+(int)fingers.get(0).y);
 						}
 					}
 
