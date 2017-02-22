@@ -48,7 +48,7 @@ public class Video extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private JFrame frame = new JFrame("Hand track");
 	private JLabel lab = new JLabel();
-	private static String stringa = "Attendo azione";
+	private static String string = "Attendo azione";
 
 	private static Point last = new Point();
 	private static boolean close = false;
@@ -64,7 +64,7 @@ public class Video extends JPanel {
 
 	}
 
-	public void setframe(final VideoCapture webcam) {
+	public void setFrame(final VideoCapture webcam) {
 		frame.setSize(1024, 768);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
@@ -80,7 +80,7 @@ public class Video extends JPanel {
 		});
 	}
 
-	public void frametolabel(Mat matframe) {
+	public void frameToLabel(Mat matframe) {
 		MatOfByte cc = new MatOfByte();
 		Imgcodecs.imencode(".JPG", matframe, cc);
 		byte[] chupa = cc.toArray();
@@ -93,14 +93,14 @@ public class Video extends JPanel {
 		}
 	}
 
-	public double calcoladistanza(Point P1, Point P2) {
+	public double calculatesDistance(Point P1, Point P2) {
 		double distance = Math.sqrt(((P1.x - P2.x) * (P1.x - P2.x)) + ((P1.y - P2.y) * (P1.y - P2.y)));
 
 		return distance;
 	}
 
-	public double calcolaangolo(Point P1, Point P2, Point P3) {
-		double angolo = 0;
+	public double calculateAngle(Point P1, Point P2, Point P3) {
+		double angle = 0;
 		Point v1 = new Point();
 		Point v2 = new Point();
 		v1.x = P3.x - P1.x;
@@ -110,102 +110,99 @@ public class Video extends JPanel {
 		double dotproduct = (v1.x * v2.x) + (v1.y * v2.y);
 		double length1 = Math.sqrt((v1.x * v1.x) + (v1.y * v1.y));
 		double length2 = Math.sqrt((v2.x * v2.x) + (v2.y * v2.y));
-		double angle = Math.acos(dotproduct / (length1 * length2));
-		angolo = angle * 180 / Math.PI;
+		angle = Math.acos(dotproduct / (length1 * length2));
+		angle = angle * 180 / Math.PI;
 
-		return angolo;
+		return angle;
 	}
 
-	public Mat filtrocolorergb(int b, int g, int r, int b1, int g1, int r1, Mat immagine) {
-		Mat modifica = new Mat();
-		if (immagine != null) {
-			Core.inRange(immagine, new Scalar(b, g, r), new Scalar(b1, g1, r1), modifica);
+	public Mat filterColorRGB(int b, int g, int r, int b1, int g1, int r1, Mat image) {
+		Mat modification = new Mat();
+		if (image != null) {
+			Core.inRange(image, new Scalar(b, g, r), new Scalar(b1, g1, r1), modification);
 		} else {
-			System.out.println("Errore immagine");
+			System.out.println("Errore image");
 		}
-		return modifica;
+		return modification;
 	}
 
-	public Mat filtrocolorehsv(int h, int s, int v, int h1, int s1, int v1, Mat immagine) {
-		Mat modifica = new Mat();
-		if (immagine != null) {
-			Core.inRange(immagine, new Scalar(h, s, v), new Scalar(h1, s1, v1), modifica);
+	public Mat filterColorHSV(int h, int s, int v, int h1, int s1, int v1, Mat image) {
+		Mat modification = new Mat();
+		if (image != null) {
+			Core.inRange(image, new Scalar(h, s, v), new Scalar(h1, s1, v1), modification);
 		} else {
-			System.out.println("Errore immagine");
+			System.out.println("Error image");
 		}
-		return modifica;
+		return modification;
 	}
 
-	public Mat skindetction(Mat orig) {
-		Mat maschera = new Mat();
-		Mat risultato = new Mat();
-		Core.inRange(orig, new Scalar(0, 0, 0), new Scalar(30, 30, 30), risultato);
-		Imgproc.cvtColor(orig, maschera, Imgproc.COLOR_BGR2HSV);
-		for (int i = 0; i < maschera.size().height; i++) {
-			for (int j = 0; j < maschera.size().width; j++) {
-				if (maschera.get(i, j)[0] < 19
-						|| maschera.get(i, j)[0] > 150 && maschera.get(i, j)[1] > 25 && maschera.get(i, j)[1] < 220) {
+	public Mat skinDetection(Mat orig) {
+		Mat mask = new Mat();
+		Mat result = new Mat();
+		Core.inRange(orig, new Scalar(0, 0, 0), new Scalar(30, 30, 30), result);
+		Imgproc.cvtColor(orig, mask, Imgproc.COLOR_BGR2HSV);
+		for (int i = 0; i < mask.size().height; i++) {
+			for (int j = 0; j < mask.size().width; j++) {
+				if (mask.get(i, j)[0] < 19
+						|| mask.get(i, j)[0] > 150 && mask.get(i, j)[1] > 25 && mask.get(i, j)[1] < 220) {
 
-					risultato.put(i, j, 255, 255, 255);
+					result.put(i, j, 255, 255, 255);
 
 				} else {
-					risultato.put(i, j, 0, 0, 0);
+					result.put(i, j, 0, 0, 0);
 				}
 			}
 
 		}
 
-		return risultato;
+		return result;
 
 	}
 
-	public Mat filtromorfologico(int kd, int ke, Mat immagine) {
-		Mat modifica = new Mat();
-		Imgproc.erode(immagine, modifica, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(ke, ke)));
-		// Imgproc.erode(modifica, modifica,
-		// Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new
-		// Size(ke,ke)));
-		Imgproc.dilate(modifica, modifica, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(kd, kd)));
-		return modifica;
+	public Mat morphologicalFiltering(int kd, int ke, Mat image) {
+		Mat modification = new Mat();
+		Imgproc.erode(image, modification, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(ke, ke)));
+		Imgproc.erode(modification, modification,Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(ke,ke)));
+		Imgproc.dilate(modification, modification, Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, new Size(kd, kd)));
+		return modification;
 
 	}
 
-	public List<MatOfPoint> cercacontorno(Mat originale, Mat immagine, boolean disegna, boolean disegnatutto,
-			int filtropixel) {
+	public List<MatOfPoint> lookingOutline(Mat original, Mat image, boolean draws, boolean designEverything,
+			int filterPixels) {
 		List<MatOfPoint> contours = new LinkedList<MatOfPoint>();
 		List<MatOfPoint> contoursbig = new LinkedList<MatOfPoint>();
 		Mat hierarchy = new Mat();
 
-		Imgproc.findContours(immagine, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE,
+		Imgproc.findContours(image, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE,
 				new Point(0, 0));
 
 		for (int i = 0; i < contours.size(); i++) {
-			if (contours.get(i).size().height > filtropixel) {
+			if (contours.get(i).size().height > filterPixels) {
 				contoursbig.add(contours.get(i));
-				if (disegna && !disegnatutto)
-					Imgproc.drawContours(originale, contours, i, new Scalar(0, 255, 0), 2, 8, hierarchy, 0,
+				if (draws && !designEverything)
+					Imgproc.drawContours(original, contours, i, new Scalar(0, 255, 0), 2, 8, hierarchy, 0,
 							new Point());
 			}
 
-			if (disegnatutto && !disegna)
-				Imgproc.drawContours(originale, contours, i, new Scalar(0, 255, 255), 2, 8, hierarchy, 0, new Point());
+			if (designEverything && !draws)
+				Imgproc.drawContours(original, contours, i, new Scalar(0, 255, 255), 2, 8, hierarchy, 0, new Point());
 
 		}
 		return contoursbig;
 	}
 
-	public List<Point> listacontorno(Mat immagine, int filtropixel) {
+	public List<Point> contourList(Mat image, int filtropixel) {
 		List<MatOfPoint> contours = new LinkedList<MatOfPoint>();
 		List<MatOfPoint> contoursbig = new LinkedList<MatOfPoint>();
-		List<Point> listapunti = new LinkedList<Point>();
+		List<Point> pointsList = new LinkedList<Point>();
 		Mat hierarchy = new Mat();
 
-		Imgproc.findContours(immagine, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE,
+		Imgproc.findContours(image, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_NONE,
 				new Point(0, 0));
 
 		for (int i = 0; i < contours.size(); i++) {
-			// System.out.println("Dimensione
-			// contorni"+contours.get(i).size().height);
+			System.out.println("Dimensione contorni"+contours.get(i).size().height);
 			if (contours.get(i).size().height > filtropixel) {
 				contoursbig.add(contours.get(i));
 			}
@@ -213,14 +210,14 @@ public class Video extends JPanel {
 		}
 		if (contoursbig.size() > 0) {
 
-			listapunti = contoursbig.get(0).toList();
+			pointsList = contoursbig.get(0).toList();
 
 		}
-		return listapunti;
+		return pointsList;
 	}
 
-	public List<Point> inviluppodifetti(Mat immagine, List<MatOfPoint> contours, boolean disegna,
-			int sogliaprofondita) {
+	public List<Point> envelopeDefects(Mat image, List<MatOfPoint> contours, boolean draws,
+			int thresholdDepth) {
 		List<Point> defects = new LinkedList<Point>();
 
 		for (int i = 0; i < contours.size(); i++) {
@@ -228,8 +225,8 @@ public class Video extends JPanel {
 			MatOfInt4 convexityDefects = new MatOfInt4();
 
 			@SuppressWarnings("unused")
-			List<Point> punticontorno = new LinkedList<Point>();
-			punticontorno = contours.get(i).toList();
+			List<Point> contourPoints = new LinkedList<Point>();
+			contourPoints = contours.get(i).toList();
 
 			Imgproc.convexHull(contours.get(i), hull_);
 
@@ -248,11 +245,11 @@ public class Video extends JPanel {
 					Point[] rect = new Point[4];
 					r.points(rect);
 
-					Imgproc.line(immagine, rect[0], rect[1], new Scalar(0, 100, 0), 2);
-					Imgproc.line(immagine, rect[0], rect[3], new Scalar(0, 100, 0), 2);
-					Imgproc.line(immagine, rect[1], rect[2], new Scalar(0, 100, 0), 2);
-					Imgproc.line(immagine, rect[2], rect[3], new Scalar(0, 100, 0), 2);
-					Imgproc.rectangle(immagine, r.boundingRect().tl(), r.boundingRect().br(), new Scalar(50, 50, 50));
+					Imgproc.line(image, rect[0], rect[1], new Scalar(0, 100, 0), 2);
+					Imgproc.line(image, rect[0], rect[3], new Scalar(0, 100, 0), 2);
+					Imgproc.line(image, rect[1], rect[2], new Scalar(0, 100, 0), 2);
+					Imgproc.line(image, rect[2], rect[3], new Scalar(0, 100, 0), 2);
+					Imgproc.rectangle(image, r.boundingRect().tl(), r.boundingRect().br(), new Scalar(50, 50, 50));
 				}
 				// fine rettangolo
 
@@ -267,27 +264,27 @@ public class Video extends JPanel {
 						hull_.get(i1, 0, zx);
 						hull_.get(0, 0, zxx);
 					}
-					if (disegna)
-						Imgproc.line(immagine, pts.get(zx[0]), pts.get(zxx[0]), new Scalar(140, 140, 140), 2);
+					if (draws)
+						Imgproc.line(image, pts.get(zx[0]), pts.get(zxx[0]), new Scalar(140, 140, 140), 2);
 				}
 
 				for (int i1 = 0; i1 < convexityDefects.size().height; i1++) {
 					convexityDefects.get(i1, 0, buff);
-					if (buff[3] / 256 > sogliaprofondita) {
+					if (buff[3] / 256 > thresholdDepth) {
 						if (pts.get(buff[2]).x > 0 && pts.get(buff[2]).x < 1024 && pts.get(buff[2]).y > 0
 								&& pts.get(buff[2]).y < 768) {
 							defects.add(pts.get(buff[2]));
-							Imgproc.circle(immagine, pts.get(buff[2]), 6, new Scalar(0, 255, 0));
-							if (disegna)
-								Imgproc.circle(immagine, pts.get(buff[2]), 6, new Scalar(0, 255, 0));
+							Imgproc.circle(image, pts.get(buff[2]), 6, new Scalar(0, 255, 0));
+							if (draws)
+								Imgproc.circle(image, pts.get(buff[2]), 6, new Scalar(0, 255, 0));
 
 						}
 					}
 				}
 				if (defects.size() < 3) {
 					int dim = pts.size();
-					Imgproc.circle(immagine, pts.get(0), 3, new Scalar(0, 255, 0), 2);
-					Imgproc.circle(immagine, pts.get(0 + dim / 4), 3, new Scalar(0, 255, 0), 2);
+					Imgproc.circle(image, pts.get(0), 3, new Scalar(0, 255, 0), 2);
+					Imgproc.circle(image, pts.get(0 + dim / 4), 3, new Scalar(0, 255, 0), 2);
 					defects.add(pts.get(0));
 					defects.add(pts.get(0 + dim / 4));
 
@@ -297,20 +294,19 @@ public class Video extends JPanel {
 		return defects;
 	}
 
-	public Point centropalmo(Mat immagine, List<Point> difetti) {
+	public Point palmCenter(Mat image, List<Point> defects) {
 		MatOfPoint2f pr = new MatOfPoint2f();
 		Point center = new Point();
 		float[] radius = new float[1];
-		pr.create((int) (difetti.size()), 1, CvType.CV_32S);
-		pr.fromList(difetti);
+		pr.create((int) (defects.size()), 1, CvType.CV_32S);
+		pr.fromList(defects);
 
 		if (pr.size().height > 0) {
 			start = true;
 			Imgproc.minEnclosingCircle(pr, center, radius);
-
-			// Core.circle(immagine, center,(int) radius[0], new
-			// Scalar(255,0,0));
-			// Core.circle(immagine, center, 3, new Scalar(0,0,255),4);
+			Imgproc.circle(image, center,(int) radius[0], new
+			Scalar(255,0,0));
+			Imgproc.circle(image, center, 3, new Scalar(0,0,255),4);
 		} else {
 			start = false;
 		}
@@ -318,27 +314,27 @@ public class Video extends JPanel {
 
 	}
 
-	public List<Point> dita(Mat immagine, List<Point> punticontorno, Point center) {
-		List<Point> puntidita = new LinkedList<Point>();
-		List<Point> dita = new LinkedList<Point>();
-		int intervallo = 55;
-		for (int j = 0; j < punticontorno.size(); j++) {
+	public List<Point> fingers(Mat image, List<Point> contourPoints, Point center) {
+		List<Point> contours = new LinkedList<Point>();
+		List<Point> fingers = new LinkedList<Point>();
+		int interval = 55;
+		for (int j = 0; j < contourPoints.size(); j++) {
 			Point prec = new Point();
 			Point vertice = new Point();
 			Point next = new Point();
-			vertice = punticontorno.get(j);
-			if (j - intervallo > 0) {
+			vertice = contourPoints.get(j);
+			if (j - interval > 0) {
 
-				prec = punticontorno.get(j - intervallo);
+				prec = contourPoints.get(j - interval);
 			} else {
-				int a = intervallo - j;
-				prec = punticontorno.get(punticontorno.size() - a - 1);
+				int a = interval - j;
+				prec = contourPoints.get(contourPoints.size() - a - 1);
 			}
-			if (j + intervallo < punticontorno.size()) {
-				next = punticontorno.get(j + intervallo);
+			if (j + interval < contourPoints.size()) {
+				next = contourPoints.get(j + interval);
 			} else {
-				int a = j + intervallo - punticontorno.size();
-				next = punticontorno.get(a);
+				int a = j + interval - contourPoints.size();
+				next = contourPoints.get(a);
 			}
 
 			Point v1 = new Point();
@@ -361,10 +357,10 @@ public class Video extends JPanel {
 						((next.x - center.x) * (next.x - center.x)) + ((next.y - center.y) * (next.y - center.y)));
 				if (centroprec < centrovert && centronext < centrovert) {
 
-					puntidita.add(vertice);
-					// Core.circle(immagine, vertice, 2, new Scalar(200,0,230));
+					contours.add(vertice);
+					// Core.circle(image, vertice, 2, new Scalar(200,0,230));
 
-					// Core.line(immagine, vertice, center, new
+					// Core.line(image, vertice, center, new
 					// Scalar(0,255,255));
 				}
 			}
@@ -375,22 +371,22 @@ public class Video extends JPanel {
 		media.y = 0;
 		int med = 0;
 		boolean t = false;
-		if (puntidita.size() > 0) {
-			double dif = Math.sqrt(((puntidita.get(0).x - puntidita.get(puntidita.size() - 1).x)
-					* (puntidita.get(0).x - puntidita.get(puntidita.size() - 1).x))
-					+ ((puntidita.get(0).y - puntidita.get(puntidita.size() - 1).y)
-							* (puntidita.get(0).y - puntidita.get(puntidita.size() - 1).y)));
+		if (contours.size() > 0) {
+			double dif = Math.sqrt(((contours.get(0).x - contours.get(contours.size() - 1).x)
+					* (contours.get(0).x - contours.get(contours.size() - 1).x))
+					+ ((contours.get(0).y - contours.get(contours.size() - 1).y)
+							* (contours.get(0).y - contours.get(contours.size() - 1).y)));
 			if (dif <= 20) {
 				t = true;
 			}
 		}
-		for (int i = 0; i < puntidita.size() - 1; i++) {
+		for (int i = 0; i < contours.size() - 1; i++) {
 
-			double d = Math.sqrt(((puntidita.get(i).x - puntidita.get(i + 1).x)
-					* (puntidita.get(i).x - puntidita.get(i + 1).x))
-					+ ((puntidita.get(i).y - puntidita.get(i + 1).y) * (puntidita.get(i).y - puntidita.get(i + 1).y)));
+			double d = Math.sqrt(((contours.get(i).x - contours.get(i + 1).x)
+					* (contours.get(i).x - contours.get(i + 1).x))
+					+ ((contours.get(i).y - contours.get(i + 1).y) * (contours.get(i).y - contours.get(i + 1).y)));
 
-			if (d > 20 || i + 1 == puntidita.size() - 1) {
+			if (d > 20 || i + 1 == contours.size() - 1) {
 				Point p = new Point();
 
 				p.x = (int) (media.x / med);
@@ -398,16 +394,16 @@ public class Video extends JPanel {
 
 				// if(p.x>0 && p.x<1024 && p.y<768 && p.y>0){
 
-				dita.add(p);
+				fingers.add(p);
 				// }
 
-				if (t && i + 1 == puntidita.size() - 1) {
+				if (t && i + 1 == contours.size() - 1) {
 					Point ult = new Point();
-					if (dita.size() > 1) {
-						ult.x = (dita.get(0).x + dita.get(dita.size() - 1).x) / 2;
-						ult.y = (dita.get(0).y + dita.get(dita.size() - 1).y) / 2;
-						dita.set(0, ult);
-						dita.remove(dita.size() - 1);
+					if (fingers.size() > 1) {
+						ult.x = (fingers.get(0).x + fingers.get(fingers.size() - 1).x) / 2;
+						ult.y = (fingers.get(0).y + fingers.get(fingers.size() - 1).y) / 2;
+						fingers.set(0, ult);
+						fingers.remove(fingers.size() - 1);
 					}
 				}
 				med = 0;
@@ -415,57 +411,57 @@ public class Video extends JPanel {
 				media.y = 0;
 			} else {
 
-				media.x = (media.x + puntidita.get(i).x);
-				media.y = (media.y + puntidita.get(i).y);
+				media.x = (media.x + contours.get(i).x);
+				media.y = (media.y + contours.get(i).y);
 				med++;
 
 			}
 		}
 
-		return dita;
+		return fingers;
 	}
 
-	public void disegnaditacentropalmo(Mat immagine, Point center, Point dito, List<Point> dita) {
+	public void getPalmCenter(Mat image, Point center, Point finger, List<Point> fingers) {
 
-		Imgproc.line(immagine, new Point(150, 50), new Point(730, 50), new Scalar(255, 0, 0), 2);
-		Imgproc.line(immagine, new Point(150, 380), new Point(730, 380), new Scalar(255, 0, 0), 2);
-		Imgproc.line(immagine, new Point(150, 50), new Point(150, 380), new Scalar(255, 0, 0), 2);
-		Imgproc.line(immagine, new Point(730, 50), new Point(730, 380), new Scalar(255, 0, 0), 2);
-		if (dita.size() == 1) {
-			Imgproc.line(immagine, center, dito, new Scalar(0, 255, 255), 4);
-			Imgproc.circle(immagine, dito, 3, new Scalar(255, 0, 255), 3);
-			// Core.putText(immagine, dito.toString(), dito,
+		Imgproc.line(image, new Point(150, 50), new Point(730, 50), new Scalar(255, 0, 0), 2);
+		Imgproc.line(image, new Point(150, 380), new Point(730, 380), new Scalar(255, 0, 0), 2);
+		Imgproc.line(image, new Point(150, 50), new Point(150, 380), new Scalar(255, 0, 0), 2);
+		Imgproc.line(image, new Point(730, 50), new Point(730, 380), new Scalar(255, 0, 0), 2);
+		if (fingers.size() == 1) {
+			Imgproc.line(image, center, finger, new Scalar(0, 255, 255), 4);
+			Imgproc.circle(image, finger, 3, new Scalar(255, 0, 255), 3);
+			// Core.putText(image, dito.toString(), dito,
 			// Core.FONT_HERSHEY_COMPLEX, 1, new Scalar(0,200,255));
 
 		} else {
-			for (int i = 0; i < dita.size(); i++) {
-				Imgproc.line(immagine, center, dita.get(i), new Scalar(0, 255, 255), 4);
-				Imgproc.circle(immagine, dita.get(i), 3, new Scalar(255, 0, 255), 3);
+			for (int i = 0; i < fingers.size(); i++) {
+				Imgproc.line(image, center, fingers.get(i), new Scalar(0, 255, 255), 4);
+				Imgproc.circle(image, fingers.get(i), 3, new Scalar(255, 0, 255), 3);
 			}
 		}
-		Imgproc.circle(immagine, center, 3, new Scalar(0, 0, 255), 3);
-		// Core.putText(immagine, center.toString(), center,
+		Imgproc.circle(image, center, 3, new Scalar(0, 0, 255), 3);
+		// Core.putText(image, center.toString(), center,
 		// Core.FONT_HERSHEY_COMPLEX, 1, new Scalar(0,200,255));
 
 	}
 
-	public void mousetrack(List<Point> dita, Point dito, Point centro, Robot r, boolean on, Mat immagine, long temp)
+	public void mouseTrack(List<Point> fingers, Point dito, Point center, Robot r, boolean on, Mat image, long temp)
 			throws InterruptedException {
 
-		if (on && centro.x > 10 && centro.y > 10 && dito.x > 10 && centro.y > 10 && start) {
+		if (on && center.x > 10 && center.y > 10 && dito.x > 10 && center.y > 10 && start) {
 			current = temp;
-			switch (dita.size()) {
+			switch (fingers.size()) {
 			case 0:
 				if (act && current - prev > 500) {
-					stringa = "Drag & drop";
+					string = "Drag & drop";
 					r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
 					act = false;
 				} else {
 					if (current - prev > 500) {
 						Point p = new Point();
 						Point np = new Point();
-						np.x = centro.x - last.x;
-						np.y = centro.y - last.y;
+						np.x = center.x - last.x;
+						np.y = center.y - last.y;
 						p.x = (int) (-1 * (np.x - 730)) * 1366 / 580;
 						p.y = (int) (np.y - 50) * 768 / 330;
 						if (p.x > 0 && p.x > 0 && p.x < 1367 && p.y < 769) {
@@ -478,7 +474,7 @@ public class Video extends JPanel {
 			case 1:
 
 				if (act && current - prev > 500) {
-					stringa = "Click";
+					string = "Click";
 					System.out.println("click");
 					r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 					r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
@@ -491,7 +487,7 @@ public class Video extends JPanel {
 					act = false;
 				} else {
 					if (current - prev > 500) {
-						stringa = "Puntatore";
+						string = "Puntatore";
 
 						Point p1 = new Point();
 						p1.x = (int) (-1 * (dito.x - 730)) * 1366 / 580;
@@ -499,19 +495,19 @@ public class Video extends JPanel {
 						if (p1.x > 0 && p1.x > 0 && p1.x < 1367 && p1.y < 769) {
 							r.mouseMove((int) p1.x, (int) p1.y);
 						}
-						last.x = centro.x - dito.x;
-						last.y = centro.y - dito.y;
+						last.x = center.x - dito.x;
+						last.y = center.y - dito.y;
 					}
 				}
 				break;
 			case 2:
-				double angolo = calcolaangolo(dita.get(0), dita.get(1), centro);
+				double angle = calculateAngle(fingers.get(0), fingers.get(1), center);
 				r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 				r.mouseRelease(InputEvent.BUTTON3_DOWN_MASK);
 				if (act && current - prev > 500) {
 					act = false;
-					if ((int) angolo < 30) {
-						stringa = "Doppio click";
+					if ((int) angle < 30) {
+						string = "Doppio click";
 						System.out.println("doppio click");
 						r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
 						r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
@@ -519,7 +515,7 @@ public class Video extends JPanel {
 						r.mousePress(InputEvent.BUTTON1_DOWN_MASK);
 						r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 					} else {
-						stringa = "Tasto destro";
+						string = "Tasto destro";
 						r.mousePress(InputEvent.BUTTON3_DOWN_MASK);
 						r.mouseRelease(InputEvent.BUTTON3_DOWN_MASK);
 					}
@@ -527,11 +523,11 @@ public class Video extends JPanel {
 				}
 				break;
 			case 3:
-				stringa = "Annulla";
+				string = "Annulla";
 				act = false;
 				break;
 			case 4:
-				stringa = "Blocco puntatore: attendo azione!";
+				string = "Blocco puntatore: attendo azione!";
 				r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 
 				prev = temp;
@@ -540,7 +536,7 @@ public class Video extends JPanel {
 				break;
 
 			case 5:
-				stringa = "Blocco puntatore: attendo azione!";
+				string = "Blocco puntatore: attendo azione!";
 				if (!act) {
 					r.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
 
@@ -549,7 +545,7 @@ public class Video extends JPanel {
 				}
 				break;
 			default:
-				stringa = "Attendo azione!";
+				string = "Attendo azione!";
 
 				break;
 			}
@@ -557,11 +553,11 @@ public class Video extends JPanel {
 		} else {
 			r.mouseRelease(InputEvent.BUTTON1_MASK);
 		}
-		Imgproc.putText(immagine, stringa, new Point(50, 40), Core.FONT_HERSHEY_COMPLEX, 1, new Scalar(200, 0, 0));
+		Imgproc.putText(image, string, new Point(50, 40), Core.FONT_HERSHEY_COMPLEX, 1, new Scalar(200, 0, 0));
 
 	}
 
-	public Point filtromediamobile(List<Point> buffer, Point attuale) {
+	public Point movingAverageFilter(List<Point> buffer, Point attuale) {
 		Point media = new Point();
 		media.x = 0;
 		media.y = 0;
@@ -585,7 +581,7 @@ public class Video extends JPanel {
 
 		webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, 768);
 		webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, 1024);
-		v.setframe(webcam);
+		v.setFrame(webcam);
 		
 		Mat frame = new Mat();
         webcam.read(frame); 
@@ -614,35 +610,35 @@ public class Video extends JPanel {
 									
 					//modification = v.filtromorfologico(2, 7, v.filtrocolorergb(0,0, 0, 40, 40, 40, mimm));
 					
-					modification = v.filtromorfologico(2, 7, v.filtrocolorehsv(0, 0, 0, 180, 255, 40, mimm));
+					modification = v.morphologicalFiltering(2, 7, v.filterColorHSV(0, 0, 0, 180, 255, 40, mimm));
 
-					defects = v.inviluppodifetti(mimm, v.cercacontorno(mimm, modification, false, false, 450), false, 5);
+					defects = v.envelopeDefects(mimm, v.lookingOutline(mimm, modification, false, false, 450), false, 5);
 
 					if (buffer.size() < 7) {
-						buffer.add(v.centropalmo(mimm, defects));
+						buffer.add(v.palmCenter(mimm, defects));
 					} else {
-						center = v.filtromediamobile(buffer, v.centropalmo(mimm, defects));
-						System.out.println((int)center.x+" "+(int)center.y+" "+(int)v.centropalmo(mimm,defects).x+" "+(int)v.centropalmo(mimm,defects).y);
+						center = v.movingAverageFilter(buffer, v.palmCenter(mimm, defects));
+						System.out.println((int)center.x+" "+(int)center.y+" "+(int)v.palmCenter(mimm,defects).x+" "+(int)v.palmCenter(mimm,defects).y);
 					}
 
-					fingers = v.dita(mimm, v.listacontorno(modification, 200), center);
+					fingers = v.fingers(mimm, v.contourList(modification, 200), center);
 
 					if (fingers.size() == 1 && buffer_fingers.size() < 5) {
 						buffer_fingers.add(fingers.get(0));
 						finger = fingers.get(0);
 					} else {
 						if (fingers.size() == 1) {
-							finger = v.filtromediamobile(buffer_fingers, fingers.get(0));
+							finger = v.movingAverageFilter(buffer_fingers, fingers.get(0));
 							// System.out.println((int)dito.x +" "+(int)dito.y+"
 							// "+(int)dita.get(0).x+" "+(int)dita.get(0).y);
 						}
 					}
 
-					v.disegnaditacentropalmo(mimm, center, finger, fingers);
+					v.getPalmCenter(mimm, center, finger, fingers);
 
-					v.mousetrack(fingers, finger, center, r, true, mimm, temp);
+					v.mouseTrack(fingers, finger, center, r, true, mimm, temp);
 
-					v.frametolabel(mimm);
+					v.frameToLabel(mimm);
 
 				}
 			}
