@@ -482,6 +482,7 @@ public class Video extends JPanel {
 	 */
 	public void getPalmCenter(Mat image, Point center, Point finger, List<Point> fingers) {
 
+		//box in image
 		Imgproc.line(image, new Point(150, 50), new Point(730, 50), new Scalar(255, 0, 0), 2);
 		Imgproc.line(image, new Point(150, 380), new Point(730, 380), new Scalar(255, 0, 0), 2);
 		Imgproc.line(image, new Point(150, 50), new Point(150, 380), new Scalar(255, 0, 0), 2);
@@ -665,7 +666,6 @@ public class Video extends JPanel {
         Mat skin = skinDetection(frame); 		
 		
 		Robot r = new Robot();
-		Mat mimm = new Mat();
 		Mat modification = new Mat();
 		Point center = new Point();
 		Point finger = new Point();
@@ -684,7 +684,7 @@ public class Video extends JPanel {
 				if (!close) {
 					temp = System.currentTimeMillis();
 					webcam.read(frame); 
-					webcam.retrieve(mimm);
+					webcam.retrieve(frame);
 								
 					//B,G,R
 					//modification = v.morphologicalFiltering(2, 7, v.filterColorRGB(90, 100, 150, 110, 130, 180, mimm));
@@ -692,18 +692,20 @@ public class Video extends JPanel {
 					//0-20 = 0 - 50
 					//30-50 = 70 - 120
 					//50-70 = 120 - 160
-					modification = v.morphologicalFiltering(2, 7, v.filterColorHSV(0, 0, 0, 180, 255, 40,mimm));
+					modification = v.morphologicalFiltering(2, 7, v.filterColorHSV(0, 0, 0, 180, 255, 40,frame));
 
-					defects = v.envelopeDefects(mimm, v.lookingOutline(mimm, modification, false, false, 450), false, 5);
+					//
+					defects = v.envelopeDefects(frame, v.lookingOutline(frame, modification, false, false, 450), false, 5);
 
 					if (buffer.size() < 7) {
-						buffer.add(v.palmCenter(mimm, defects));
+						buffer.add(v.palmCenter(frame, defects));
 					} else {
-						center = v.movingAverageFilter(buffer, v.palmCenter(mimm, defects));
+						center = v.movingAverageFilter(buffer, v.palmCenter(frame, defects));
 						//System.out.println((int)center.x+" "+(int)center.y+" "+(int)v.palmCenter(mimm,defects).x+" "+(int)v.palmCenter(mimm,defects).y);
 					}
 
-					fingers = v.fingers(mimm, v.contourList(modification, 200), center);
+					//make a list of detected fingers
+					fingers = v.fingers(frame, v.contourList(modification, 200), center);
 
 					if (fingers.size() == 1 && buffer_fingers.size() < 5) {
 						buffer_fingers.add(fingers.get(0));
@@ -715,11 +717,12 @@ public class Video extends JPanel {
 						}
 					}
 
-					v.getPalmCenter(mimm, center, finger, fingers);
+					v.getPalmCenter(frame, center, finger, fingers);
 
-					v.mouseTrack(fingers, finger, center, r, true, mimm, temp);
+					//v.mouseTrack(fingers, finger, center, r, true, frame, temp);
 
-					v.frameToLabel(mimm);
+					//output 
+					v.frameToLabel(frame);
 
 				}
 			}
